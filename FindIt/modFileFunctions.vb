@@ -6,7 +6,10 @@ Module modFileFunctions
 
   <DllImport("shell32", CharSet:=CharSet.Auto, setlasterror:=True)>
   Private Function ShellExecuteEx(ByRef info As ShellExecuteInfo) As Integer
+  End Function
 
+  <DllImport("user32", SetLastError:=True, CharSet:=CharSet.Auto)>
+  Private Function DestroyIcon(ByVal hWnd As IntPtr) As Boolean
   End Function
 
   Private Structure SHFILEINFO
@@ -45,7 +48,9 @@ Module modFileFunctions
         If IO.Directory.Exists(sPath) Then Return My.Resources.folder
         Return My.Resources.Small
       End If
-      Return Icon.FromHandle(shInfo.hIcon)
+      Dim icoRet As Icon = Icon.FromHandle(shInfo.hIcon).Clone
+      DestroyIcon(shInfo.hIcon)
+      Return icoRet
     Catch ex As Exception
       If IO.File.Exists(sPath) Then Return My.Resources.file
       If IO.Directory.Exists(sPath) Then Return My.Resources.folder
