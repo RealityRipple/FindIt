@@ -1,17 +1,12 @@
 ﻿Public Class frmSearch
-
   Private FoundArray As Collections.Generic.List(Of String)
   Private Cancelled As Boolean = False
   Private animVal As Integer = 1
   Private sortView As listviewcolumnsorter
-
 #Region "Form Events"
-
-
   Private Sub frmSearch_Shown(sender As Object, e As System.EventArgs) Handles Me.Shown
     Try
       Dim sPath As String = Command()
-
       If String.IsNullOrEmpty(sPath) Then
         cmbDrive.Drive = My.Computer.FileSystem.SpecialDirectories.ProgramFiles.Substring(0, 1).ToUpper & ":"
         lstDir.Path = cmbDrive.Drive.Substring(0, 1).ToUpper & ":\"
@@ -52,20 +47,16 @@
     sortView = New ListViewColumnSorter
     lvResults.ListViewItemSorter = sortView
   End Sub
-
   Private Sub frmSearch_SizeChanged(sender As Object, e As System.EventArgs) Handles Me.SizeChanged
     lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
   End Sub
-
   Private Sub frmSearch_ResizeEnd(sender As Object, e As System.EventArgs) Handles Me.ResizeEnd
     lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
   End Sub
-
   Private Sub frmSearch_FormClosing(sender As Object, e As System.Windows.Forms.FormClosingEventArgs) Handles Me.FormClosing
     Cancelled = True
   End Sub
 #End Region
-
 #Region "Inputs"
 #Region "File Name"
   Private Sub chkFileName_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileName.CheckedChanged
@@ -85,7 +76,6 @@
     End If
   End Sub
 #End Region
-
 #Region "File Contents"
   Private Sub chkFileContents_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileContents.CheckedChanged
     If chkFileContents.Checked Then
@@ -104,20 +94,16 @@
     End If
   End Sub
 #End Region
-
 #Region "File Date"
   Private Sub optBefore_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles optBefore.CheckedChanged
     dtFileDate.Focus()
   End Sub
-
   Private Sub optAround_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles optAround.CheckedChanged
     dtFileDate.Focus()
   End Sub
-
   Private Sub optAfter_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles optAfter.CheckedChanged
     dtFileDate.Focus()
   End Sub
-
   Private Sub chkFileDate_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileDate.CheckedChanged
     If chkFileDate.Checked Then
       pnlFileDateList.Visible = True
@@ -135,7 +121,6 @@
     End If
   End Sub
 #End Region
-
 #Region "File Size"
   Private Sub chkFileSize_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileSize.CheckedChanged
     If chkFileSize.Checked Then
@@ -154,7 +139,6 @@
     End If
   End Sub
 #End Region
-
 #Region "Search Directory"
   Private Sub cmbDrive_SelectedIndexChanged(sender As System.Object, e As System.EventArgs) Handles cmbDrive.SelectedIndexChanged
     Try
@@ -168,7 +152,6 @@
 
   End Sub
 #End Region
-
   Private Sub cmdFind_Click(sender As System.Object, e As System.EventArgs) Handles cmdFind.Click
     If cmdFind.Text = "&Find >>" Then
       Cancelled = False
@@ -255,25 +238,21 @@
     End If
   End Sub
 #End Region
-
 #Region "Search Functions"
   Private Class FindEventArgs
     Inherits EventArgs
-
     Public Enum DateComparisons
       None
       Earlier
       Near
       Later
     End Enum
-
     Public Enum SizeComparisons
       None
       Less
       Equal
       Greater
     End Enum
-
     Public Enum SizeScales
       None
       [Byte]
@@ -284,7 +263,6 @@
       PByte
       EByte
     End Enum
-
     Public sFromDir As String
     Public sFileName As String
     Public sFileContents As String
@@ -294,7 +272,6 @@
     Public iFileSizeVal As Integer
     Public iFileSizeScale As SizeScales
     Public bFast As Boolean
-
     Public Sub New(FromDir As String, fName As String, fContents As String, fDateCompare As DateComparisons, fDateVal As Date, fSizeCompare As SizeComparisons, fSizeVal As Integer, fSizeScale As SizeScales, fFast As Boolean)
       sFromDir = FromDir
       sFileName = fName
@@ -307,7 +284,6 @@
       bFast = fFast
     End Sub
   End Class
-
   Private Sub FindFiles(sender As Object, e As FindEventArgs)
     Dim sFileList() As String
     Try
@@ -322,7 +298,6 @@
           bAdd = True
         End If
       End If
-
       If Not String.IsNullOrEmpty(e.sFileContents) Then
         If e.bFast Then
           SetProgVal("Searching in " & FilePath)
@@ -333,8 +308,6 @@
           Using ioRead As New IO.BinaryReader(ioFile, System.Text.Encoding.GetEncoding("latin1"))
             Dim sPercent As String = "0%"
             Do While ioRead.BaseStream.Position < ioRead.BaseStream.Length
-
-
               Dim cChr As Char = ioRead.ReadChar
               If Cancelled Then Exit Sub
               If Char.ToLower(cChr) = Char.ToLower(e.sFileContents(0)) Then
@@ -360,7 +333,6 @@
           End Using
         End Using
       End If
-
       If (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
         Dim mySize As Int64 = New IO.FileInfo(FilePath).Length
         Dim FindSize As Int64 = e.iFileSizeVal
@@ -382,20 +354,16 @@
           If Math.Abs(mySize - FindSize) < iScale Then bAdd = True
         End If
       End If
-
       If (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
         Dim myDate As Date = New IO.FileInfo(FilePath).LastWriteTime
         If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = True
-
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = True
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
           If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) < 7 Then bAdd = True
         End If
       End If
-
-
       If bAdd Then
         AddToFound(False, New FindEventArgs(Nothing, FilePath, Nothing, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
         If Not e.bFast Then
@@ -417,7 +385,6 @@
       Else
         SetProgress("Searching in " & FolderPath)
       End If
-
       Dim bAdd As Boolean = False
       If (Not String.IsNullOrEmpty(e.sFileName)) Then
         If IO.Path.GetFileName(FolderPath).ToLower.Contains(e.sFileName.ToLower) Then
@@ -445,20 +412,16 @@
           If Math.Abs(mySize - FindSize) < iScale Then bAdd = True
         End If
       End If
-
       If (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
         Dim myDate As Date = New IO.DirectoryInfo(FolderPath).LastWriteTime
         If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = True
-
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = True
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
           If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) < 7 Then bAdd = True
         End If
       End If
-
-
       If bAdd Then
         AddToFound(False, New FindEventArgs(Nothing, FolderPath, Nothing, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
         If Not e.bFast Then
@@ -467,8 +430,6 @@
           If Cancelled Then Exit Sub
         End If
       End If
-
-
       If Cancelled Then Exit Sub
       FindFiles(False, New FindEventArgs(FolderPath, e.sFileName, e.sFileContents, e.bFileDateCompare, e.dFileDateVal, e.bFileSizeCompare, e.iFileSizeVal, e.iFileSizeScale, e.bFast))
       If Not e.bFast Then Application.DoEvents()
@@ -478,9 +439,7 @@
       SetEnabled(True)
       SetProgress("Search Complete - " & lvResults.Items.Count & " Item" & IIf(lvResults.Items.Count = 1, "", "s") & " found")
     End If
-
   End Sub
-
   Private Sub AddToFound(sender As Object, e As FindEventArgs)
     If Me.InvokeRequired Then
       Me.Invoke(New EventHandler(AddressOf AddToFound), sender, e)
@@ -492,7 +451,6 @@
       End If
     End If
   End Sub
-
   Private Sub AddFileToList(sPath As String)
     Dim lvItem As New ListViewItem(IO.Path.GetFileName(sPath))
     If IO.File.Exists(sPath) Then
@@ -529,13 +487,9 @@
     End Using
     lvItem.ImageKey = key
     If Not imlIcons.Images.ContainsKey(key) Then imlIcons.Images.Add(key, GetFileIcon(sPath))
-
     lvResults.SmallImageList = imlIcons
     lvResults.Items.Add(lvItem)
-
-
   End Sub
-
   Private Sub tmrListUpdate_Tick(sender As System.Object, e As System.EventArgs) Handles tmrListUpdate.Tick
     If sender Is Me Then
       SetProgress("Completing Search...")
@@ -550,7 +504,6 @@
     End If
     If Not lblStatus.Text = sProgressVal Then lblStatus.Text = sProgressVal
   End Sub
-
   Private Sub tmrSearchAnim_Tick(sender As System.Object, e As System.EventArgs) Handles tmrSearchAnim.Tick
     Select Case animVal
       Case 1 : lblImage.Image = My.Resources.Search_01
@@ -577,12 +530,10 @@
       Case 22 : lblImage.Image = My.Resources.Search_22
       Case Else : lblImage.Image = Nothing
     End Select
-
     animVal += 1
     If animVal > 22 Then animVal = 1
   End Sub
 #End Region
-
 #Region "Results"
   Private Sub lvResults_AfterLabelEdit(sender As Object, e As System.Windows.Forms.LabelEditEventArgs) Handles lvResults.AfterLabelEdit
     If String.IsNullOrEmpty(e.Label) Then
@@ -615,7 +566,6 @@
       e.CancelEdit = True
     End If
   End Sub
-
   Private Sub lvResults_ColumnClick(sender As Object, e As System.Windows.Forms.ColumnClickEventArgs) Handles lvResults.ColumnClick
     If e.Column = sortView.SortColumn Then
       If sortView.Order = SortOrder.Ascending Then
@@ -640,19 +590,15 @@
     End If
     lvResults.Sort()
   End Sub
-
   Private Sub lvResults_ColumnWidthChanged(sender As Object, e As System.Windows.Forms.ColumnWidthChangedEventArgs) Handles lvResults.ColumnWidthChanged
     If Not e.ColumnIndex = 3 Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
   End Sub
-
   Private Sub lvResults_ColumnWidthChanging(sender As Object, e As System.Windows.Forms.ColumnWidthChangingEventArgs) Handles lvResults.ColumnWidthChanging
     If Not e.ColumnIndex = 3 Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
   End Sub
-
   Private Sub lvResults_DoubleClick(sender As Object, e As System.EventArgs) Handles lvResults.DoubleClick
     mnuOpen.PerformClick()
   End Sub
-
   Private Sub lvResults_KeyUp(sender As Object, e As System.Windows.Forms.KeyEventArgs) Handles lvResults.KeyUp
     If e.KeyCode = Keys.Delete Then
       mnuDelete.PerformClick()
@@ -664,7 +610,6 @@
       Next
     End If
   End Sub
-
 #Region "Context Menu"
   Private Sub mnuOpen_Click(sender As System.Object, e As System.EventArgs) Handles mnuOpen.Click
     If lvResults.SelectedItems.Count = 0 Then Exit Sub
@@ -685,7 +630,6 @@
       End If
     Next
   End Sub
-
   Private Sub mnuOpenFolder_Click(sender As System.Object, e As System.EventArgs) Handles mnuOpenFolder.Click
     If lvResults.SelectedItems.Count = 0 Then Exit Sub
     For Each item As ListViewItem In lvResults.SelectedItems
@@ -700,7 +644,6 @@
       End If
     Next
   End Sub
-
   Private Sub mnuRename_Click(sender As System.Object, e As System.EventArgs) Handles mnuRename.Click
     If lvResults.SelectedItems.Count = 0 Then Exit Sub
     If lvResults.SelectedItems.Count = 1 Then
@@ -709,7 +652,6 @@
       MsgBox("You can only rename one file at a time!", MsgBoxStyle.Exclamation Or MsgBoxStyle.ApplicationModal, "FindIt")
     End If
   End Sub
-
   Private Sub mnuDelete_Click(sender As System.Object, e As System.EventArgs) Handles mnuDelete.Click
     If lvResults.SelectedItems.Count = 0 Then Exit Sub
     If lvResults.SelectedItems.Count = 1 Then
@@ -755,7 +697,6 @@
     End If
     SetProgress("Search Complete - " & lvResults.Items.Count & " Item" & IIf(lvResults.Items.Count = 1, "", "s") & " found")
   End Sub
-
   Private Sub mnuProperties_Click(sender As System.Object, e As System.EventArgs) Handles mnuProperties.Click
     If lvResults.SelectedItems.Count = 0 Then Exit Sub
     If lvResults.SelectedItems.Count = 1 Then
@@ -770,7 +711,6 @@
   End Sub
 #End Region
 #End Region
-
 #Region "Functions"
   Private Delegate Sub SetEnabledInvoker(bEnabled As Boolean)
   Private Sub SetEnabled(bEnabled As Boolean)
@@ -778,26 +718,21 @@
       Try
         Me.Invoke(New SetEnabledInvoker(AddressOf SetEnabled), bEnabled)
       Catch ex As Exception
-
       End Try
     Else
       chkFileName.Enabled = bEnabled
       txtFileName.Enabled = bEnabled
-
       chkFileContents.Enabled = bEnabled
       txtFileContents.Enabled = bEnabled
-
       chkFileSize.Enabled = bEnabled
       cmbSizeCompare.Enabled = bEnabled
       txtFileSizeValue.Enabled = bEnabled
       cmbFileSizeScale.Enabled = bEnabled
-
       chkFileDate.Enabled = bEnabled
       optBefore.Enabled = bEnabled
       optAround.Enabled = bEnabled
       optAfter.Enabled = bEnabled
       dtFileDate.Enabled = bEnabled
-
       cmbDrive.Enabled = bEnabled
       lstDir.Enabled = bEnabled
       chkFast.Enabled = bEnabled
@@ -812,14 +747,12 @@
       End If
     End If
   End Sub
-
   Private Delegate Sub SetProgressInvoker(sStatus As String)
   Private Sub SetProgress(sStatus As String)
     If Me.InvokeRequired Then
       Try
         Me.Invoke(New SetProgressInvoker(AddressOf SetProgress), sStatus)
       Catch ex As Exception
-
       End Try
     Else
       sProgressVal = sStatus
@@ -832,13 +765,11 @@
       Try
         Me.Invoke(New SetProgressInvoker(AddressOf SetProgVal), sStatus)
       Catch ex As Exception
-
       End Try
     Else
       sProgressVal = sStatus
     End If
   End Sub
-
   Private Function ByteSize(InBytes As UInt64) As String
     If InBytes >= 1000 Then
       If InBytes / 1024 >= 1000 Then
@@ -866,7 +797,6 @@
       Return InBytes & " B"
     End If
   End Function
-
   Private Function GetDirSize(sPath As String) As UInt64
     Dim mySize As UInt64 = 0
     Try
@@ -885,72 +815,30 @@
       Return 0
     End Try
   End Function
-
-  ''' <summary>
-  ''' This class is an implementation of the 'IComparer' interface.
-  ''' </summary>
   Public Class ListViewColumnSorter
     Implements IComparer
-    ''' <summary>
-    ''' Specifies the column to be sorted
-    ''' </summary>
     Private ColumnToSort As Integer
-    ''' <summary>
-    ''' Specifies the order in which to sort (i.e. 'Ascending').
-    ''' </summary>
     Private OrderOfSort As SortOrder
-    ''' <summary>
-    ''' Case insensitive comparer object
-    ''' </summary>
     Private ObjectCompare As CaseInsensitiveComparer
-
-    ''' <summary>
-    ''' Class constructor.  Initializes various elements
-    ''' </summary>
     Public Sub New()
-      ' Initialize the column to '0'
       ColumnToSort = 0
-
-      ' Initialize the sort order to 'none'
       OrderOfSort = SortOrder.None
-
-      ' Initialize the CaseInsensitiveComparer object
       ObjectCompare = New CaseInsensitiveComparer()
     End Sub
-
-    ''' <summary>
-    ''' This method is inherited from the IComparer interface.  It compares the two objects passed using a case insensitive comparison.
-    ''' </summary>
-    ''' <param name="x">First object to be compared</param>
-    ''' <param name="y">Second object to be compared</param>
-    ''' <returns>The result of the comparison. "0" if equal, negative if 'x' is less than 'y' and positive if 'x' is greater than 'y'</returns>
     Public Function Compare(x As Object, y As Object) As Integer Implements IComparer.Compare
       Dim compareResult As Integer
       Dim listviewX As ListViewItem, listviewY As ListViewItem
-
-      ' Cast the objects to be compared to ListViewItem objects
       listviewX = DirectCast(x, ListViewItem)
       listviewY = DirectCast(y, ListViewItem)
-
-      ' Compare the two items
       compareResult = ObjectCompare.Compare(listviewX.SubItems(ColumnToSort).Text, listviewY.SubItems(ColumnToSort).Text)
-
-      ' Calculate correct return value based on object comparison
       If OrderOfSort = SortOrder.Ascending Then
-        ' Ascending sort is selected, return normal result of compare operation
         Return compareResult
       ElseIf OrderOfSort = SortOrder.Descending Then
-        ' Descending sort is selected, return negative result of compare operation
         Return (-compareResult)
       Else
-        ' Return '0' to indicate they are equal
         Return 0
       End If
     End Function
-
-    ''' <summary>
-    ''' Gets or sets the number of the column to which to apply the sorting operation (Defaults to '0').
-    ''' </summary>
     Public Property SortColumn() As Integer
       Get
         Return ColumnToSort
@@ -959,10 +847,6 @@
         ColumnToSort = value
       End Set
     End Property
-
-    ''' <summary>
-    ''' Gets or sets the order of sorting to apply (for example, 'Ascending' or 'Descending').
-    ''' </summary>
     Public Property Order() As SortOrder
       Get
         Return OrderOfSort
@@ -971,7 +855,6 @@
         OrderOfSort = value
       End Set
     End Property
-
   End Class
 #End Region
 End Class

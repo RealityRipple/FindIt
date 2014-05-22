@@ -3,15 +3,12 @@ Module modFileFunctions
   <DllImport("shell32", CharSet:=CharSet.Auto, setlasterror:=True)>
   Private Function SHGetFileInfo(pszPath As String, dwFileAttributes As UInteger, ByRef psfi As SHFILEINFO, cbFileInfo As Integer, uFlags As UInteger) As IntPtr
   End Function
-
   <DllImport("shell32", CharSet:=CharSet.Auto, setlasterror:=True)>
   Private Function ShellExecuteEx(ByRef info As ShellExecuteInfo) As Integer
   End Function
-
   <DllImport("user32", SetLastError:=True, CharSet:=CharSet.Auto)>
   Private Function DestroyIcon(ByVal hWnd As IntPtr) As Boolean
   End Function
-
   Private Structure SHFILEINFO
     Public hIcon As IntPtr
     Public iIcon As Integer
@@ -57,7 +54,6 @@ Module modFileFunctions
       Return My.Resources.Small
     End Try
   End Function
-
 Public Structure SHELLEXECUTEINFO
     Public cbSize As Integer
     Public fMask As Integer
@@ -75,7 +71,6 @@ Public Structure SHELLEXECUTEINFO
     Public hIcon As IntPtr
     Public hProcess As IntPtr
   End Structure
-
   Private Const SEE_MASK_INVOKEIDLIST As Integer = &HC
   Private Const SEE_MASK_NOCLOSEPROCESS As Integer = &H40
   Private Const SEE_MASK_FLAG_NO_UI As Integer = &H400
