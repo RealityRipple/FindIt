@@ -184,7 +184,9 @@
         End If
         Dim args As New FindEventArgs(lstDir.Path,
                                       IIf(chkFileName.Checked, txtFileName.Text, Nothing),
+                                      IIf(chkFileName.Checked, chkFileNameCS.Checked, False),
                                       IIf(chkFileContents.Checked, txtFileContents.Text, Nothing),
+                                      IIf(chkFileContents.Checked, chkFileContentsCS.Checked, False),
                                       IIf(chkFileDate.Checked,
                                         IIf(optBefore.Checked, FindEventArgs.DateComparisons.Earlier,
                                           IIf(optAfter.Checked, FindEventArgs.DateComparisons.Later, FindEventArgs.DateComparisons.Near)
@@ -265,17 +267,21 @@
     End Enum
     Public sFromDir As String
     Public sFileName As String
+    Public bFileNameCS As Boolean
     Public sFileContents As String
+    Public bFileContentsCS As Boolean
     Public bFileDateCompare As DateComparisons
     Public dFileDateVal As Date
     Public bFileSizeCompare As SizeComparisons
     Public iFileSizeVal As Integer
     Public iFileSizeScale As SizeScales
     Public bFast As Boolean
-    Public Sub New(FromDir As String, fName As String, fContents As String, fDateCompare As DateComparisons, fDateVal As Date, fSizeCompare As SizeComparisons, fSizeVal As Integer, fSizeScale As SizeScales, fFast As Boolean)
+    Public Sub New(FromDir As String, fName As String, fNameCS As Boolean, fContents As String, fContentsCS As Boolean, fDateCompare As DateComparisons, fDateVal As Date, fSizeCompare As SizeComparisons, fSizeVal As Integer, fSizeScale As SizeScales, fFast As Boolean)
       sFromDir = FromDir
       sFileName = fName
+      bFileNameCS = fNameCS
       sFileContents = fContents
+      bFileContentsCS = fContentsCS
       bFileDateCompare = fDateCompare
       dFileDateVal = fDateVal
       bFileSizeCompare = fSizeCompare
@@ -284,6 +290,25 @@
       bFast = fFast
     End Sub
   End Class
+  Private Function FindValue(ByRef ioReader As IO.BinaryReader, FindCharacter As Char, CS As Boolean, Optional lastPosition As Integer = 0) As Integer
+    Try
+      If lastPosition > ioReader.BaseStream.Length Then Return -1
+      ioReader.BaseStream.Position = lastPosition
+      Do Until ioReader.BaseStream.Position >= ioReader.BaseStream.Length - 1
+        Dim readNum As Integer = 4096
+        If ioReader.BaseStream.Length - 4096 < ioReader.BaseStream.Position Then readNum = ioReader.BaseStream.Length - ioReader.BaseStream.Position
+        Dim sFile As String = ioReader.ReadChars(readNum)
+        If CS Then
+          If sFile.Contains(FindCharacter) Then Return ioReader.BaseStream.Position - readNum + sFile.IndexOf(FindCharacter)
+        Else
+          If sFile.ToLower.Contains(Char.ToLower(FindCharacter)) Then Return ioReader.BaseStream.Position - readNum + sFile.ToLower.IndexOf(Char.ToLower(FindCharacter))
+        End If
+      Loop
+      Return -1
+    Catch ex As Exception
+      Return -1
+    End Try
+  End Function
   Private Sub FindFiles(sender As Object, e As FindEventArgs)
     Dim sFileList() As String
     Try
@@ -294,11 +319,13 @@
     For Each FilePath In sFileList
       Dim bAdd As Boolean = False
       If (Not String.IsNullOrEmpty(e.sFileName)) Then
-        If IO.Path.GetFileName(FilePath).ToLower.Contains(e.sFileName.ToLower) Then
-          bAdd = True
+        If e.bFileNameCS Then
+          If IO.Path.GetFileName(FilePath).Contains(e.sFileName) Then bAdd = True
+        Else
+          If IO.Path.GetFileName(FilePath).ToLower.Contains(e.sFileName.ToLower) Then bAdd = True
         End If
       End If
-      If Not String.IsNullOrEmpty(e.sFileContents) Then
+      If Not bAdd AndAlso Not String.IsNullOrEmpty(e.sFileContents) Then
         If e.bFast Then
           SetProgVal("Searching in " & FilePath)
         Else
@@ -307,33 +334,41 @@
         Using ioFile As New IO.FileStream(FilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read)
           Using ioRead As New IO.BinaryReader(ioFile, System.Text.Encoding.GetEncoding("latin1"))
             Dim sPercent As String = "0%"
+            Dim ContentIndex As Integer = -1
             Do While ioRead.BaseStream.Position < ioRead.BaseStream.Length
-              Dim cChr As Char = ioRead.ReadChar
+              ContentIndex = FindValue(ioRead, e.sFileContents(0), e.bFileContentsCS, ContentIndex + 1)
+              If ContentIndex = -1 Then Exit Do
               If Cancelled Then Exit Sub
-              If Char.ToLower(cChr) = Char.ToLower(e.sFileContents(0)) Then
-                Dim iToRead As Integer = e.sFileContents.Length - 1
-                If ioRead.BaseStream.Length - ioRead.BaseStream.Position < iToRead Then iToRead = ioRead.BaseStream.Length - ioRead.BaseStream.Position
-                Dim bTmp() As Byte = ioRead.ReadBytes(iToRead)
-                Dim c As String = System.Text.Encoding.GetEncoding("latin1").GetString(bTmp)
-                Dim sTest As String = cChr & c
-                If Cancelled Then Exit Sub
-                If e.sFileContents.ToLower = sTest.ToLower Then
+              ioRead.BaseStream.Position = ContentIndex
+              Dim iToRead As Integer = e.sFileContents.Length
+              If ioRead.BaseStream.Length - ioRead.BaseStream.Position < iToRead Then iToRead = ioRead.BaseStream.Length - ioRead.BaseStream.Position
+              Dim bTmp() As Byte = ioRead.ReadBytes(iToRead)
+              Dim sTemp As String = System.Text.Encoding.GetEncoding("latin1").GetString(bTmp)
+              If Cancelled Then Exit Sub
+              If e.bFileContentsCS Then
+                If e.sFileContents = sTemp Then
                   bAdd = True
+                  Exit Do
                 End If
-                If Not e.bFast Then
-                  If Not sPercent = FormatPercent(ioRead.BaseStream.Position / ioRead.BaseStream.Length, 0, TriState.False, TriState.False, TriState.False) Then
-                    sPercent = FormatPercent(ioRead.BaseStream.Position / ioRead.BaseStream.Length, 0, TriState.False, TriState.False, TriState.False)
-                    SetProgress("Searching in " & FilePath & " (" & sPercent & ")")
-                    Application.DoEvents()
-                    If Cancelled Then Exit Sub
-                  End If
+              Else
+                If e.sFileContents.ToLower = sTemp.ToLower Then
+                  bAdd = True
+                  Exit Do
+                End If
+              End If
+              If Not e.bFast Then
+                If Not sPercent = FormatPercent(ioRead.BaseStream.Position / ioRead.BaseStream.Length, 0, TriState.False, TriState.False, TriState.False) Then
+                  sPercent = FormatPercent(ioRead.BaseStream.Position / ioRead.BaseStream.Length, 0, TriState.False, TriState.False, TriState.False)
+                  SetProgress("Searching in " & FilePath & " (" & sPercent & ")")
+                  Application.DoEvents()
+                  If Cancelled Then Exit Sub
                 End If
               End If
             Loop
           End Using
         End Using
       End If
-      If (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
+      If Not bAdd AndAlso (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
         Dim mySize As Int64 = New IO.FileInfo(FilePath).Length
         Dim FindSize As Int64 = e.iFileSizeVal
         Dim iScale As Int64 = 1
@@ -354,7 +389,7 @@
           If Math.Abs(mySize - FindSize) < iScale Then bAdd = True
         End If
       End If
-      If (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
+      If Not bAdd AndAlso (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
         Dim myDate As Date = New IO.FileInfo(FilePath).LastWriteTime
         If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = True
@@ -365,7 +400,7 @@
         End If
       End If
       If bAdd Then
-        AddToFound(False, New FindEventArgs(Nothing, FilePath, Nothing, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
+        AddToFound(False, New FindEventArgs(Nothing, FilePath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
         If Not e.bFast Then
           If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
           Application.DoEvents()
@@ -423,7 +458,7 @@
         End If
       End If
       If bAdd Then
-        AddToFound(False, New FindEventArgs(Nothing, FolderPath, Nothing, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
+        AddToFound(False, New FindEventArgs(Nothing, FolderPath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
         If Not e.bFast Then
           If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
           Application.DoEvents()
@@ -431,7 +466,7 @@
         End If
       End If
       If Cancelled Then Exit Sub
-      FindFiles(False, New FindEventArgs(FolderPath, e.sFileName, e.sFileContents, e.bFileDateCompare, e.dFileDateVal, e.bFileSizeCompare, e.iFileSizeVal, e.iFileSizeScale, e.bFast))
+      FindFiles(False, New FindEventArgs(FolderPath, e.sFileName, e.bFileNameCS, e.sFileContents, e.bFileContentsCS, e.bFileDateCompare, e.dFileDateVal, e.bFileSizeCompare, e.iFileSizeVal, e.iFileSizeScale, e.bFast))
       If Not e.bFast Then Application.DoEvents()
     Next
     If (sender = True) Then
@@ -474,7 +509,7 @@
       If Not sDir.EndsWith(IO.Path.DirectorySeparatorChar) Then sDir &= IO.Path.DirectorySeparatorChar
       lvItem.SubItems.Add(sDir)
       lvItem.ToolTipText = IO.Path.GetFileName(sPath) & vbNewLine &
-                           "Size: " & ByteSize(getdirsize(sPath)) & vbNewLine &
+                           "Size: " & ByteSize(GetDirSize(sPath)) & vbNewLine &
                            "Created: " & dInfo.CreationTime.ToString("g") & vbNewLine &
                            "Modified: " & dInfo.LastWriteTime.ToString("g") & vbNewLine &
                            "Attributes: " & IIf(String.IsNullOrEmpty(dInfo.Attributes.ToString("F")), "None", dInfo.Attributes.ToString("F")) & vbNewLine &
@@ -599,6 +634,41 @@
   Private Sub lvResults_DoubleClick(sender As Object, e As System.EventArgs) Handles lvResults.DoubleClick
     mnuOpen.PerformClick()
   End Sub
+  Private dataObj As ShellDataObject = Nothing
+  Private Sub lvResults_ItemDrag(sender As Object, e As System.Windows.Forms.ItemDragEventArgs) Handles lvResults.ItemDrag
+    Dim fileNames() As String
+    dataObj = New ShellDataObject()
+    fileNames = New String(lvResults.SelectedItems.Count - 1) {}
+    For I As Integer = 0 To lvResults.SelectedItems.Count - 1
+      fileNames(I) = IO.Path.Combine(lvResults.SelectedItems(I).SubItems(3).Text, lvResults.SelectedItems(I).Text)
+    Next
+    'dataObj.SetData(DataFormats.FileDrop, fileNames)
+    dataObj.SetData(ShellClipboardFormats.CFSTR_PREFERREDDROPEFFECT, DragDropEffects.Copy)
+    dataObj.SetData(ShellClipboardFormats.CFSTR_INDRAGLOOP, 1)
+    Dim dl As New Specialized.StringCollection
+    dl.AddRange(fileNames)
+    dataObj.SetFileDropList(dl)
+    Dim ret = lvResults.DoDragDrop(dataObj, DragDropEffects.Copy Or DragDropEffects.Move)
+    If ret = DragDropEffects.Move Then
+      For I As Integer = lvResults.SelectedItems.Count - 1 To 0 Step -1
+        lvResults.SelectedItems(I).Remove 
+      Next
+      SetProgress("Search Complete - " & lvResults.Items.Count & " Item" & IIf(lvResults.Items.Count = 1, "", "s") & " found")
+    End If
+    dataObj = Nothing
+  End Sub
+  Private Sub lvResults_QueryContinueDrag(sender As Object, e As System.Windows.Forms.QueryContinueDragEventArgs) Handles lvResults.QueryContinueDrag
+    If e.EscapePressed Then
+      e.Action = DragAction.Cancel
+      Exit Sub
+    End If
+    If e.KeyState And 1 Then
+      e.Action = DragAction.Continue
+    Else
+      dataObj.SetData(ShellClipboardFormats.CFSTR_INDRAGLOOP, 0)
+      e.Action = DragAction.Drop
+    End If
+  End Sub
   Private Sub lvResults_KeyUp(sender As Object, e As System.Windows.Forms.KeyEventArgs) Handles lvResults.KeyUp
     If e.KeyCode = Keys.Delete Then
       mnuDelete.PerformClick()
@@ -722,8 +792,10 @@
     Else
       chkFileName.Enabled = bEnabled
       txtFileName.Enabled = bEnabled
+      chkFileNameCS.Enabled = bEnabled
       chkFileContents.Enabled = bEnabled
       txtFileContents.Enabled = bEnabled
+      chkFileContentsCS.Enabled = bEnabled
       chkFileSize.Enabled = bEnabled
       cmbSizeCompare.Enabled = bEnabled
       txtFileSizeValue.Enabled = bEnabled
@@ -857,4 +929,5 @@
     End Property
   End Class
 #End Region
+
 End Class

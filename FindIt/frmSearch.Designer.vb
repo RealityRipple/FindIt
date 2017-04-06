@@ -72,6 +72,8 @@ Partial Class frmSearch
     Me.mnuSpace2 = New System.Windows.Forms.MenuItem()
     Me.mnuProperties = New System.Windows.Forms.MenuItem()
     Me.tmrSearchAnim = New System.Windows.Forms.Timer(Me.components)
+    Me.chkFileNameCS = New System.Windows.Forms.CheckBox()
+    Me.chkFileContentsCS = New System.Windows.Forms.CheckBox()
     Me.pnlFindIt.SuspendLayout()
     Me.pnlOptions.SuspendLayout()
     Me.pnlOptionList.SuspendLayout()
@@ -221,6 +223,7 @@ Partial Class frmSearch
     '
     'pnlFileName
     '
+    Me.pnlFileName.Controls.Add(Me.chkFileNameCS)
     Me.pnlFileName.Controls.Add(Me.txtFileName)
     Me.pnlFileName.Controls.Add(Me.chkFileName)
     Me.pnlFileName.Dock = System.Windows.Forms.DockStyle.Top
@@ -233,10 +236,11 @@ Partial Class frmSearch
     '
     'txtFileName
     '
-    Me.txtFileName.Dock = System.Windows.Forms.DockStyle.Top
+    Me.txtFileName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
     Me.txtFileName.Location = New System.Drawing.Point(3, 16)
     Me.txtFileName.Name = "txtFileName"
-    Me.txtFileName.Size = New System.Drawing.Size(156, 20)
+    Me.txtFileName.Size = New System.Drawing.Size(110, 20)
     Me.txtFileName.TabIndex = 1
     '
     'chkFileName
@@ -252,6 +256,7 @@ Partial Class frmSearch
     '
     'pnlFileContents
     '
+    Me.pnlFileContents.Controls.Add(Me.chkFileContentsCS)
     Me.pnlFileContents.Controls.Add(Me.txtFileContents)
     Me.pnlFileContents.Controls.Add(Me.chkFileContents)
     Me.pnlFileContents.Dock = System.Windows.Forms.DockStyle.Top
@@ -264,10 +269,11 @@ Partial Class frmSearch
     '
     'txtFileContents
     '
-    Me.txtFileContents.Dock = System.Windows.Forms.DockStyle.Top
+    Me.txtFileContents.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
     Me.txtFileContents.Location = New System.Drawing.Point(3, 16)
     Me.txtFileContents.Name = "txtFileContents"
-    Me.txtFileContents.Size = New System.Drawing.Size(156, 20)
+    Me.txtFileContents.Size = New System.Drawing.Size(110, 20)
     Me.txtFileContents.TabIndex = 1
     Me.txtFileContents.Visible = False
     '
@@ -464,6 +470,7 @@ Partial Class frmSearch
     '
     'lvResults
     '
+    Me.lvResults.AllowDrop = True
     Me.lvResults.Columns.AddRange(New System.Windows.Forms.ColumnHeader() {Me.colFileName, Me.colFileSize, Me.colFileDate, Me.colFilePath})
     Me.pnlResults.SetColumnSpan(Me.lvResults, 3)
     Me.lvResults.Dock = System.Windows.Forms.DockStyle.Fill
@@ -580,6 +587,28 @@ Partial Class frmSearch
     'tmrSearchAnim
     '
     '
+    'chkFileNameCS
+    '
+    Me.chkFileNameCS.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+    Me.chkFileNameCS.FlatStyle = System.Windows.Forms.FlatStyle.System
+    Me.chkFileNameCS.Location = New System.Drawing.Point(119, 19)
+    Me.chkFileNameCS.Name = "chkFileNameCS"
+    Me.chkFileNameCS.Size = New System.Drawing.Size(37, 16)
+    Me.chkFileNameCS.TabIndex = 2
+    Me.chkFileNameCS.Text = "CS"
+    Me.chkFileNameCS.UseVisualStyleBackColor = True
+    '
+    'chkFileContentsCS
+    '
+    Me.chkFileContentsCS.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+    Me.chkFileContentsCS.FlatStyle = System.Windows.Forms.FlatStyle.System
+    Me.chkFileContentsCS.Location = New System.Drawing.Point(119, 17)
+    Me.chkFileContentsCS.Name = "chkFileContentsCS"
+    Me.chkFileContentsCS.Size = New System.Drawing.Size(38, 19)
+    Me.chkFileContentsCS.TabIndex = 1
+    Me.chkFileContentsCS.Text = "CS"
+    Me.chkFileContentsCS.UseVisualStyleBackColor = True
+    '
     'frmSearch
     '
     Me.AcceptButton = Me.cmdFind
@@ -665,5 +694,7 @@ Partial Class frmSearch
   Friend WithEvents mnuProperties As System.Windows.Forms.MenuItem
   Friend WithEvents tmrSearchAnim As System.Windows.Forms.Timer
   Friend WithEvents lblImage As System.Windows.Forms.ToolStripStatusLabel
+  Friend WithEvents chkFileNameCS As System.Windows.Forms.CheckBox
+  Friend WithEvents chkFileContentsCS As System.Windows.Forms.CheckBox
 
 End Class
