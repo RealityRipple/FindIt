@@ -67,6 +67,7 @@
   Private Sub chkFileName_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileName.CheckedChanged
     If chkFileName.Checked Then
       txtFileName.Visible = True
+      chkFileNameCS.Visible = True
       Do Until pnlFileName.Height >= 40
         pnlFileName.Height += 1
         Application.DoEvents()
@@ -78,6 +79,7 @@
         Application.DoEvents()
       Loop
       txtFileName.Visible = False
+      chkFileNameCS.Visible = False
     End If
   End Sub
 #End Region
@@ -85,6 +87,7 @@
   Private Sub chkFileContents_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileContents.CheckedChanged
     If chkFileContents.Checked Then
       txtFileContents.Visible = True
+      chkFileContentsCS.Visible = True
       Do Until pnlFileContents.Height >= 40
         pnlFileContents.Height += 1
         Application.DoEvents()
@@ -96,6 +99,7 @@
         Application.DoEvents()
       Loop
       txtFileContents.Visible = False
+      chkFileContentsCS.Visible = False
     End If
   End Sub
 #End Region
