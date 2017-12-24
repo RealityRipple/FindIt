@@ -38,11 +38,14 @@
     pnlFileName.Height = 40
     pnlFileContents.Height = 20
     pnlFileDate.Height = 20
+    pnlFileTime.Height = 20
     optAround.Checked = True
     dtFileDate.Value = Today
     pnlFileSize.Height = 20
     cmbSizeCompare.SelectedIndex = 1
     cmbFileSizeScale.SelectedIndex = 0
+    cmbFileTimeHourMerridian.SelectedIndex = 1
+    cmbFileTimeMinute.SelectedIndex = 0
     pnlResults.Visible = False
     pnlFindIt.RowStyles(2).SizeType = SizeType.Absolute
     pnlFindIt.RowStyles(2).Height = 0
@@ -116,7 +119,7 @@
   Private Sub chkFileDate_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileDate.CheckedChanged
     If chkFileDate.Checked Then
       pnlFileDateList.Visible = True
-      Do Until pnlFileDate.Height >= 120
+      Do Until pnlFileDate.Height >= 75
         pnlFileDate.Height += 1
         Application.DoEvents()
       Loop
@@ -127,6 +130,33 @@
         Application.DoEvents()
       Loop
       pnlFileDateList.Visible = False
+    End If
+  End Sub
+#End Region
+#Region "File Time"
+  Private Sub chkFileTimeHour_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileTimeHour.CheckedChanged
+    txtFileTimeHour.Enabled = chkFileTimeHour.Checked
+    cmbFileTimeHourMerridian.Enabled = chkFileTimeHour.Checked
+    If chkFileTimeHour.Enabled Then txtFileTimeHour.Focus()
+  End Sub
+  Private Sub chkFileTimeMinute_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileTimeMinute.CheckedChanged
+    cmbFileTimeMinute.Enabled = chkFileTimeMinute.Checked
+    If chkFileTimeMinute.Enabled Then cmbFileTimeMinute.Focus()
+  End Sub
+  Private Sub chkFileTime_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileTime.CheckedChanged
+    If chkFileTime.Checked Then
+      pnlFileTimeList.Visible = True
+      Do Until pnlFileTime.Height >= 75
+        pnlFileTime.Height += 1
+        Application.DoEvents()
+      Loop
+      chkFileTimeHour.Focus()
+    Else
+      Do Until pnlFileTime.Height <= 20
+        pnlFileTime.Height -= 1
+        Application.DoEvents()
+      Loop
+      pnlFileTimeList.Visible = False
     End If
   End Sub
 #End Region
@@ -164,7 +194,7 @@
   Private Sub cmdFind_Click(sender As System.Object, e As System.EventArgs) Handles cmdFind.Click
     If cmdFind.Text = "&Find >>" Then
       Cancelled = False
-      If Not chkFileName.Checked And Not chkFileContents.Checked And Not chkFileSize.Checked And Not chkFileDate.Checked Then
+      If Not chkFileName.Checked And Not chkFileContents.Checked And Not chkFileSize.Checked And Not chkFileDate.Checked And Not (chkFileTime.Checked And (chkFileTimeHour.Checked Or chkFileTimeMinute.Checked)) Then
         chkFileName.Focus()
         Beep()
         Exit Sub
@@ -202,6 +232,23 @@
                                         ), FindEventArgs.DateComparisons.None
                                       ),
                                       IIf(chkFileDate.Checked, dtFileDate.Value.Date, New Date(1970, 1, 1)),
+                                      IIf(chkFileTime.Checked,
+                                        IIf(chkFileTimeHour.Checked, txtFileTimeHour.Value, 0), 0
+                                      ),
+                                      IIf(chkFileTime.Checked,
+                                        IIf(chkFileTimeHour.Checked,
+                                          IIf(cmbFileTimeHourMerridian.SelectedIndex = 0, TriState.True, TriState.False), TriState.UseDefault
+                                        ), TriState.UseDefault
+                                      ),
+                                      IIf(chkFileTime.Checked,
+                                        IIf(chkFileTimeMinute.Checked,
+                                          IIf(cmbFileTimeMinute.SelectedIndex = 1, 15,
+                                            IIf(cmbFileTimeMinute.SelectedIndex = 2, 30,
+                                              IIf(cmbFileTimeMinute.SelectedIndex = 3, 45, 0)
+                                            )
+                                          ), -1
+                                        ), -1
+                                      ),
                                       IIf(chkFileSize.Checked,
                                         IIf(cmbSizeCompare.SelectedIndex = 0, FindEventArgs.SizeComparisons.Greater,
                                           IIf(cmbSizeCompare.SelectedIndex = 1, FindEventArgs.SizeComparisons.Equal, FindEventArgs.SizeComparisons.Less)
@@ -281,11 +328,14 @@
     Public bFileContentsCS As Boolean
     Public bFileDateCompare As DateComparisons
     Public dFileDateVal As Date
+    Public iFileTimeHour As Integer
+    Public cFileTimeHourM As Char
+    Public iFileTimeMinute As Integer
     Public bFileSizeCompare As SizeComparisons
     Public iFileSizeVal As Integer
     Public iFileSizeScale As SizeScales
     Public bFast As Boolean
-    Public Sub New(FromDir As String, fName As String, fNameCS As Boolean, fContents As String, fContentsCS As Boolean, fDateCompare As DateComparisons, fDateVal As Date, fSizeCompare As SizeComparisons, fSizeVal As Integer, fSizeScale As SizeScales, fFast As Boolean)
+    Public Sub New(FromDir As String, fName As String, fNameCS As Boolean, fContents As String, fContentsCS As Boolean, fDateCompare As DateComparisons, fDateVal As Date, fTimeHour As Integer, fTimeAM As TriState, fTimeMinute As Integer, fSizeCompare As SizeComparisons, fSizeVal As Integer, fSizeScale As SizeScales, fFast As Boolean)
       sFromDir = FromDir
       sFileName = fName
       bFileNameCS = fNameCS
@@ -293,6 +343,15 @@
       bFileContentsCS = fContentsCS
       bFileDateCompare = fDateCompare
       dFileDateVal = fDateVal
+      iFileTimeHour = fTimeHour
+      If fTimeAM = TriState.True Then
+        cFileTimeHourM = "A"c
+      ElseIf fTimeAM = TriState.False Then
+        cFileTimeHourM = "P"c
+      Else
+        cFileTimeHourM = "0"c
+      End If
+      iFileTimeMinute = fTimeMinute
       bFileSizeCompare = fSizeCompare
       iFileSizeVal = fSizeVal
       iFileSizeScale = fSizeScale
@@ -407,11 +466,39 @@
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = False
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
-          If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) < 7 Then bAdd = True
+          If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) > 7 Then bAdd = False
+        End If
+      End If
+      If bAdd AndAlso (Not e.iFileTimeHour = 0 And Not e.cFileTimeHourM = "0"c) Then
+        Dim myDate As Date = New IO.FileInfo(FilePath).LastWriteTime
+        Dim matchHour As Integer = e.iFileTimeHour
+        If e.cFileTimeHourM = "P"c Then
+          If Not matchHour = 12 Then matchHour += 12
+        Else
+          If matchHour = 12 Then matchHour = 0
+        End If
+        If matchHour = 0 Then
+          If Not (myDate.Hour = 23 Or myDate.Hour = 0 Or myDate.Hour = 1) Then bAdd = False
+        ElseIf matchHour = 23 Then
+          If Not (myDate.Hour = 22 Or myDate.Hour = 23 Or myDate.Hour = 0) Then bAdd = False
+        Else
+          If Math.Abs(matchHour - myDate.Hour) > 1 Then bAdd = False
+        End If
+      End If
+      If bAdd AndAlso Not e.iFileTimeMinute = -1 Then
+        Dim myDate As Date = New IO.FileInfo(FilePath).LastWriteTime
+        If e.iFileTimeMinute = 0 Then
+          If Not (myDate.Minute >= 53 Or myDate.Minute <= 7) Then bAdd = False
+        ElseIf e.iFileTimeMinute = 15 Then
+          If myDate.Minute < 7 Or myDate.Minute > 22 Then bAdd = False
+        ElseIf e.iFileTimeMinute = 30 Then
+          If myDate.Minute < 22 Or myDate.Minute > 37 Then bAdd = False
+        ElseIf e.iFileTimeMinute = 45 Then
+          If myDate.Minute < 37 Or myDate.Minute > 53 Then bAdd = False
         End If
       End If
       If bAdd Then
-        AddToFound(False, New FindEventArgs(Nothing, FilePath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
+        AddToFound(False, New FindEventArgs(Nothing, FilePath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), 0, TriState.UseDefault, -1, FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
         If Not e.bFast Then
           If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
           Application.DoEvents()
@@ -431,53 +518,89 @@
       Else
         SetProgress("Searching in " & FolderPath)
       End If
-      Dim bAdd As Boolean = False
-      If (Not String.IsNullOrEmpty(e.sFileName)) Then
-        If IO.Path.GetFileName(FolderPath).ToLower.Contains(e.sFileName.ToLower) Then
-          bAdd = True
+      If String.IsNullOrEmpty(e.sFileContents) Then
+        Dim bAdd As Boolean = True
+        If (Not String.IsNullOrEmpty(e.sFileName)) Then
+          If Not IO.Path.GetFileName(FolderPath).ToLower.Contains(e.sFileName.ToLower) Then
+            bAdd = False
+          End If
         End If
-      End If
-      If (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
-        Dim mySize As Int64 = GetDirSize(FolderPath)
-        Dim FindSize As Int64 = e.iFileSizeVal
-        Dim iScale As Int64 = 1
-        Select Case e.iFileSizeScale
-          Case FindEventArgs.SizeScales.KByte : iScale = 1024L
-          Case FindEventArgs.SizeScales.MByte : iScale = 1024L * 1024L
-          Case FindEventArgs.SizeScales.GByte : iScale = 1024L * 1024L * 1024L
-          Case FindEventArgs.SizeScales.TByte : iScale = 1024L * 1024L * 1024L * 1024L
-          Case FindEventArgs.SizeScales.PByte : iScale = 1024L * 1024L * 1024L * 1024L * 1024L
-          Case FindEventArgs.SizeScales.EByte : iScale = 1024L * 1024L * 1024L * 1024L * 1024L * 1024L
-        End Select
-        FindSize *= iScale
-        If e.bFileSizeCompare = FindEventArgs.SizeComparisons.Less Then
-          If mySize < FindSize Then bAdd = True
-        ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Greater Then
-          If mySize > FindSize Then bAdd = True
-        ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Equal Then
-          If Math.Abs(mySize - FindSize) < iScale Then bAdd = True
+        If bAdd And (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
+          Dim mySize As Int64 = GetDirSize(FolderPath)
+          Dim FindSize As Int64 = e.iFileSizeVal
+          Dim iScale As Int64 = 1
+          Select Case e.iFileSizeScale
+            Case FindEventArgs.SizeScales.KByte : iScale = 1024L
+            Case FindEventArgs.SizeScales.MByte : iScale = 1024L * 1024L
+            Case FindEventArgs.SizeScales.GByte : iScale = 1024L * 1024L * 1024L
+            Case FindEventArgs.SizeScales.TByte : iScale = 1024L * 1024L * 1024L * 1024L
+            Case FindEventArgs.SizeScales.PByte : iScale = 1024L * 1024L * 1024L * 1024L * 1024L
+            Case FindEventArgs.SizeScales.EByte : iScale = 1024L * 1024L * 1024L * 1024L * 1024L * 1024L
+          End Select
+          FindSize *= iScale
+          If e.bFileSizeCompare = FindEventArgs.SizeComparisons.Less Then
+            If mySize > FindSize Then bAdd = False
+          ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Greater Then
+            If mySize < FindSize Then bAdd = False
+          ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Equal Then
+            If Math.Abs(mySize - FindSize) > iScale Then bAdd = False
+          End If
         End If
-      End If
-      If (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
-        Dim myDate As Date = New IO.DirectoryInfo(FolderPath).LastWriteTime
-        If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
-          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = True
-        ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
-          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = True
-        ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
-          If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) > 7 Then bAdd = False
+        If bAdd And (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
+          Dim myDate As Date = New IO.DirectoryInfo(FolderPath).LastWriteTime
+          If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
+            If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = False
+          ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
+            If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = False
+          ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
+            If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) > 7 Then bAdd = False
+          End If
         End If
-      End If
-      If bAdd Then
-        AddToFound(False, New FindEventArgs(Nothing, FolderPath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
-        If Not e.bFast Then
-          If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
-          Application.DoEvents()
-          If Cancelled Then Exit Sub
+        If bAdd AndAlso (Not e.iFileTimeHour = 0 And Not e.cFileTimeHourM = "0"c) Then
+          Dim myDate As Date = New IO.FileInfo(FolderPath).LastWriteTime
+          Dim matchHour As Integer = e.iFileTimeHour
+          If e.cFileTimeHourM = "P"c Then
+            If Not matchHour = 12 Then matchHour += 12
+          Else
+            If matchHour = 12 Then matchHour = 0
+          End If
+          If matchHour = 0 Then
+            If Not (myDate.Hour = 23 Or myDate.Hour = 0 Or myDate.Hour = 1) Then bAdd = False
+          ElseIf matchHour = 23 Then
+            If Not (myDate.Hour = 22 Or myDate.Hour = 23 Or myDate.Hour = 0) Then bAdd = False
+          Else
+            If Math.Abs(matchHour - myDate.Hour) > 1 Then bAdd = False
+          End If
+        End If
+        If bAdd AndAlso Not e.iFileTimeMinute = -1 Then
+          Dim myDate As Date = New IO.FileInfo(FolderPath).LastWriteTime
+          If e.iFileTimeMinute = 0 Then
+            If Not (myDate.Minute >= 53 Or myDate.Minute <= 7) Then bAdd = False
+          ElseIf e.iFileTimeMinute = 15 Then
+            If myDate.Minute < 7 Or myDate.Minute > 22 Then bAdd = False
+          ElseIf e.iFileTimeMinute = 30 Then
+            If myDate.Minute < 22 Or myDate.Minute > 37 Then bAdd = False
+          ElseIf e.iFileTimeMinute = 45 Then
+            If myDate.Minute < 37 Or myDate.Minute > 53 Then bAdd = False
+          End If
+        End If
+        If bAdd Then
+          AddToFound(False, New FindEventArgs(Nothing, FolderPath, e.bFileNameCS, Nothing, e.bFileContentsCS, FindEventArgs.DateComparisons.None, New Date(1970, 1, 1), 0, TriState.UseDefault, -1, FindEventArgs.SizeComparisons.None, 0, FindEventArgs.SizeScales.None, e.bFast))
+          If Not e.bFast Then
+            If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
+            Application.DoEvents()
+            If Cancelled Then Exit Sub
+          End If
         End If
       End If
       If Cancelled Then Exit Sub
-      FindFiles(False, New FindEventArgs(FolderPath, e.sFileName, e.bFileNameCS, e.sFileContents, e.bFileContentsCS, e.bFileDateCompare, e.dFileDateVal, e.bFileSizeCompare, e.iFileSizeVal, e.iFileSizeScale, e.bFast))
+      Dim merridian As TriState = TriState.UseDefault
+      If e.cFileTimeHourM = "A"c Then
+        merridian = TriState.True
+      ElseIf e.cFileTimeHourM = "P"c Then
+        merridian = TriState.False
+      End If
+      FindFiles(False, New FindEventArgs(FolderPath, e.sFileName, e.bFileNameCS, e.sFileContents, e.bFileContentsCS, e.bFileDateCompare, e.dFileDateVal, e.iFileTimeHour, merridian, e.iFileTimeMinute, e.bFileSizeCompare, e.iFileSizeVal, e.iFileSizeScale, e.bFast))
       If Not e.bFast Then Application.DoEvents()
     Next
     If (sender = True) Then
