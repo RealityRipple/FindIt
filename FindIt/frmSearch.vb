@@ -68,6 +68,7 @@
 #Region "Inputs"
 #Region "File Name"
   Private Sub chkFileName_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileName.CheckedChanged
+    chkFileName.AutoCheck = False
     If chkFileName.Checked Then
       txtFileName.Visible = True
       chkFileNameCS.Visible = True
@@ -84,10 +85,12 @@
       txtFileName.Visible = False
       chkFileNameCS.Visible = False
     End If
+    chkFileName.AutoCheck = True
   End Sub
 #End Region
 #Region "File Contents"
   Private Sub chkFileContents_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileContents.CheckedChanged
+    chkFileContents.AutoCheck = False
     If chkFileContents.Checked Then
       txtFileContents.Visible = True
       chkFileContentsCS.Visible = True
@@ -104,6 +107,7 @@
       txtFileContents.Visible = False
       chkFileContentsCS.Visible = False
     End If
+    chkFileContents.AutoCheck = True
   End Sub
 #End Region
 #Region "File Date"
@@ -117,6 +121,7 @@
     dtFileDate.Focus()
   End Sub
   Private Sub chkFileDate_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileDate.CheckedChanged
+    chkFileDate.AutoCheck = False
     If chkFileDate.Checked Then
       pnlFileDateList.Visible = True
       Do Until pnlFileDate.Height >= 75
@@ -131,6 +136,7 @@
       Loop
       pnlFileDateList.Visible = False
     End If
+    chkFileDate.AutoCheck = True
   End Sub
 #End Region
 #Region "File Time"
@@ -144,6 +150,7 @@
     If chkFileTimeMinute.Enabled Then cmbFileTimeMinute.Focus()
   End Sub
   Private Sub chkFileTime_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileTime.CheckedChanged
+    chkFileTime.AutoCheck = False
     If chkFileTime.Checked Then
       pnlFileTimeList.Visible = True
       Do Until pnlFileTime.Height >= 75
@@ -158,10 +165,12 @@
       Loop
       pnlFileTimeList.Visible = False
     End If
+    chkFileTime.AutoCheck = True
   End Sub
 #End Region
 #Region "File Size"
   Private Sub chkFileSize_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles chkFileSize.CheckedChanged
+    chkFileSize.AutoCheck = False
     If chkFileSize.Checked Then
       pnlFileSizeList.Visible = True
       Do Until pnlFileSize.Height >= 50
@@ -176,6 +185,7 @@
       Loop
       pnlFileSizeList.Visible = False
     End If
+    chkFileSize.AutoCheck = True
   End Sub
 #End Region
 #Region "Search Directory"
@@ -188,7 +198,6 @@
       lstDir.Path = My.Computer.FileSystem.SpecialDirectories.ProgramFiles.Substring(0, 1).ToUpper & ":"
       lstDir.Enabled = False
     End Try
-
   End Sub
 #End Region
   Private Sub cmdFind_Click(sender As System.Object, e As System.EventArgs) Handles cmdFind.Click
@@ -702,6 +711,22 @@
     animVal += 1
     If animVal > 22 Then animVal = 1
   End Sub
+  Private Sub tmrValidSearch_Tick(sender As System.Object, e As System.EventArgs) Handles tmrValidSearch.Tick
+    If Not chkFileName.Checked And Not chkFileContents.Checked And Not chkFileSize.Checked And Not chkFileDate.Checked And Not (chkFileTime.Checked And (chkFileTimeHour.Checked Or chkFileTimeMinute.Checked)) Then
+      If cmdFind.Enabled Then cmdFind.Enabled = False
+      Exit Sub
+    Else
+      If chkFileName.Checked AndAlso String.IsNullOrEmpty(txtFileName.Text) Then
+        If cmdFind.Enabled Then cmdFind.Enabled = False
+        Exit Sub
+      End If
+      If chkFileContents.Checked AndAlso String.IsNullOrEmpty(txtFileContents.Text) Then
+        If cmdFind.Enabled Then cmdFind.Enabled = False
+        Exit Sub
+      End If
+    End If
+    If Not cmdFind.Enabled Then cmdFind.Enabled = True
+  End Sub
 #End Region
 #Region "Results"
   Private Sub lvResults_AfterLabelEdit(sender As Object, e As System.Windows.Forms.LabelEditEventArgs) Handles lvResults.AfterLabelEdit
@@ -947,8 +972,11 @@
         lblImage.Image = Nothing
         cmdFind.Text = "&Find >>"
         tmrListUpdate.Enabled = False
+        tmrValidSearch.Enabled = True
       Else
         tmrSearchAnim.Enabled = True
+        tmrValidSearch.Enabled = False
+        cmdFind.Enabled = True
         cmdFind.Text = "&Stop Search"
       End If
     End If

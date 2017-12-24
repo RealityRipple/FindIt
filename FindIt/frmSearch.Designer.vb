@@ -30,9 +30,11 @@ Partial Class frmSearch
     Me.pnlFileDateTimeList = New System.Windows.Forms.TableLayoutPanel()
     Me.pnlFileTime = New System.Windows.Forms.GroupBox()
     Me.pnlFileTimeList = New System.Windows.Forms.TableLayoutPanel()
-    Me.chkFileTimeHour = New System.Windows.Forms.CheckBox()
     Me.txtFileTimeHour = New System.Windows.Forms.NumericUpDown()
     Me.cmbFileTimeHourMerridian = New System.Windows.Forms.ComboBox()
+    Me.chkFileTimeHour = New System.Windows.Forms.CheckBox()
+    Me.chkFileTimeMinute = New System.Windows.Forms.CheckBox()
+    Me.cmbFileTimeMinute = New System.Windows.Forms.ComboBox()
     Me.chkFileTime = New System.Windows.Forms.CheckBox()
     Me.pnlFileDate = New System.Windows.Forms.GroupBox()
     Me.pnlFileDateList = New System.Windows.Forms.TableLayoutPanel()
@@ -82,8 +84,7 @@ Partial Class frmSearch
     Me.mnuSpace2 = New System.Windows.Forms.MenuItem()
     Me.mnuProperties = New System.Windows.Forms.MenuItem()
     Me.tmrSearchAnim = New System.Windows.Forms.Timer(Me.components)
-    Me.cmbFileTimeMinute = New System.Windows.Forms.ComboBox()
-    Me.chkFileTimeMinute = New System.Windows.Forms.CheckBox()
+    Me.tmrValidSearch = New System.Windows.Forms.Timer(Me.components)
     Me.pnlFindIt.SuspendLayout()
     Me.pnlOptions.SuspendLayout()
     Me.pnlOptionList.SuspendLayout()
@@ -153,8 +154,8 @@ Partial Class frmSearch
     Me.pnlOptionList.Name = "pnlOptionList"
     Me.pnlOptionList.RowCount = 1
     Me.pnlOptionList.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100.0!))
-    Me.pnlOptionList.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 156.0!))
-    Me.pnlOptionList.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 156.0!))
+    Me.pnlOptionList.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 162.0!))
+    Me.pnlOptionList.RowStyles.Add(New System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 162.0!))
     Me.pnlOptionList.Size = New System.Drawing.Size(319, 162)
     Me.pnlOptionList.TabIndex = 0
     '
@@ -209,17 +210,6 @@ Partial Class frmSearch
     Me.pnlFileTimeList.TabIndex = 1
     Me.pnlFileTimeList.Visible = False
     '
-    'chkFileTimeHour
-    '
-    Me.chkFileTimeHour.Anchor = System.Windows.Forms.AnchorStyles.Left
-    Me.chkFileTimeHour.FlatStyle = System.Windows.Forms.FlatStyle.System
-    Me.chkFileTimeHour.Location = New System.Drawing.Point(3, 4)
-    Me.chkFileTimeHour.Name = "chkFileTimeHour"
-    Me.chkFileTimeHour.Size = New System.Drawing.Size(50, 18)
-    Me.chkFileTimeHour.TabIndex = 0
-    Me.chkFileTimeHour.Text = "Hour"
-    Me.chkFileTimeHour.UseVisualStyleBackColor = True
-    '
     'txtFileTimeHour
     '
     Me.txtFileTimeHour.Anchor = CType((System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
@@ -245,6 +235,42 @@ Partial Class frmSearch
     Me.cmbFileTimeHourMerridian.Name = "cmbFileTimeHourMerridian"
     Me.cmbFileTimeHourMerridian.Size = New System.Drawing.Size(40, 21)
     Me.cmbFileTimeHourMerridian.TabIndex = 2
+    '
+    'chkFileTimeHour
+    '
+    Me.chkFileTimeHour.Anchor = System.Windows.Forms.AnchorStyles.Left
+    Me.chkFileTimeHour.FlatStyle = System.Windows.Forms.FlatStyle.System
+    Me.chkFileTimeHour.Location = New System.Drawing.Point(3, 4)
+    Me.chkFileTimeHour.Name = "chkFileTimeHour"
+    Me.chkFileTimeHour.Size = New System.Drawing.Size(50, 18)
+    Me.chkFileTimeHour.TabIndex = 0
+    Me.chkFileTimeHour.Text = "Hour"
+    Me.chkFileTimeHour.UseVisualStyleBackColor = True
+    '
+    'chkFileTimeMinute
+    '
+    Me.chkFileTimeMinute.Anchor = System.Windows.Forms.AnchorStyles.Left
+    Me.chkFileTimeMinute.FlatStyle = System.Windows.Forms.FlatStyle.System
+    Me.chkFileTimeMinute.Location = New System.Drawing.Point(3, 31)
+    Me.chkFileTimeMinute.Name = "chkFileTimeMinute"
+    Me.chkFileTimeMinute.Size = New System.Drawing.Size(50, 18)
+    Me.chkFileTimeMinute.TabIndex = 3
+    Me.chkFileTimeMinute.Text = "Minute"
+    Me.chkFileTimeMinute.UseVisualStyleBackColor = True
+    '
+    'cmbFileTimeMinute
+    '
+    Me.cmbFileTimeMinute.Anchor = CType((System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+    Me.pnlFileTimeList.SetColumnSpan(Me.cmbFileTimeMinute, 2)
+    Me.cmbFileTimeMinute.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+    Me.cmbFileTimeMinute.Enabled = False
+    Me.cmbFileTimeMinute.FlatStyle = System.Windows.Forms.FlatStyle.System
+    Me.cmbFileTimeMinute.FormattingEnabled = True
+    Me.cmbFileTimeMinute.Items.AddRange(New Object() {"On the Hour", "Quarter Past", "Half Past", "Quarter To"})
+    Me.cmbFileTimeMinute.Location = New System.Drawing.Point(59, 30)
+    Me.cmbFileTimeMinute.Name = "cmbFileTimeMinute"
+    Me.cmbFileTimeMinute.Size = New System.Drawing.Size(86, 21)
+    Me.cmbFileTimeMinute.TabIndex = 4
     '
     'chkFileTime
     '
@@ -749,30 +775,9 @@ Partial Class frmSearch
     'tmrSearchAnim
     '
     '
-    'cmbFileTimeMinute
+    'tmrValidSearch
     '
-    Me.cmbFileTimeMinute.Anchor = CType((System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-    Me.pnlFileTimeList.SetColumnSpan(Me.cmbFileTimeMinute, 2)
-    Me.cmbFileTimeMinute.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
-    Me.cmbFileTimeMinute.Enabled = False
-    Me.cmbFileTimeMinute.FlatStyle = System.Windows.Forms.FlatStyle.System
-    Me.cmbFileTimeMinute.FormattingEnabled = True
-    Me.cmbFileTimeMinute.Items.AddRange(New Object() {"On the Hour", "Quarter Past", "Half Past", "Quarter To"})
-    Me.cmbFileTimeMinute.Location = New System.Drawing.Point(59, 30)
-    Me.cmbFileTimeMinute.Name = "cmbFileTimeMinute"
-    Me.cmbFileTimeMinute.Size = New System.Drawing.Size(86, 21)
-    Me.cmbFileTimeMinute.TabIndex = 4
-    '
-    'chkFileTimeMinute
-    '
-    Me.chkFileTimeMinute.Anchor = System.Windows.Forms.AnchorStyles.Left
-    Me.chkFileTimeMinute.FlatStyle = System.Windows.Forms.FlatStyle.System
-    Me.chkFileTimeMinute.Location = New System.Drawing.Point(3, 31)
-    Me.chkFileTimeMinute.Name = "chkFileTimeMinute"
-    Me.chkFileTimeMinute.Size = New System.Drawing.Size(50, 18)
-    Me.chkFileTimeMinute.TabIndex = 3
-    Me.chkFileTimeMinute.Text = "Minute"
-    Me.chkFileTimeMinute.UseVisualStyleBackColor = True
+    Me.tmrValidSearch.Enabled = True
     '
     'frmSearch
     '
@@ -876,5 +881,6 @@ Partial Class frmSearch
   Friend WithEvents cmbFileTimeHourMerridian As System.Windows.Forms.ComboBox
   Friend WithEvents chkFileTimeMinute As System.Windows.Forms.CheckBox
   Friend WithEvents cmbFileTimeMinute As System.Windows.Forms.ComboBox
+  Friend WithEvents tmrValidSearch As System.Windows.Forms.Timer
 
 End Class
