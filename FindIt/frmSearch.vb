@@ -206,17 +206,17 @@
       If Not chkFileName.Checked And Not chkFileContents.Checked And Not chkFileSize.Checked And Not chkFileDate.Checked And Not (chkFileTime.Checked And (chkFileTimeHour.Checked Or chkFileTimeMinute.Checked)) Then
         chkFileName.Focus()
         Beep()
-        Exit Sub
+        Return
       Else
         If chkFileName.Checked AndAlso String.IsNullOrEmpty(txtFileName.Text) Then
           txtFileName.Focus()
           Beep()
-          Exit Sub
+          Return
         End If
         If chkFileContents.Checked AndAlso String.IsNullOrEmpty(txtFileContents.Text) Then
           txtFileContents.Focus()
           Beep()
-          Exit Sub
+          Return
         End If
         pnlResults.Visible = True
         lvResults.Items.Clear()
@@ -416,13 +416,13 @@
             Do While ioRead.BaseStream.Position < ioRead.BaseStream.Length
               ContentIndex = FindValue(ioRead, e.sFileContents(0), e.bFileContentsCS, ContentIndex + 1)
               If ContentIndex = -1 Then Exit Do
-              If Cancelled Then Exit Sub
+              If Cancelled Then Return
               ioRead.BaseStream.Position = ContentIndex
               Dim iToRead As Integer = e.sFileContents.Length
               If ioRead.BaseStream.Length - ioRead.BaseStream.Position < iToRead Then iToRead = ioRead.BaseStream.Length - ioRead.BaseStream.Position
               Dim bTmp() As Byte = ioRead.ReadBytes(iToRead)
               Dim sTemp As String = System.Text.Encoding.GetEncoding("latin1").GetString(bTmp)
-              If Cancelled Then Exit Sub
+              If Cancelled Then Return
               If e.bFileContentsCS Then
                 If e.sFileContents = sTemp Then
                   success = True
@@ -439,7 +439,7 @@
                   sPercent = FormatPercent(ioRead.BaseStream.Position / ioRead.BaseStream.Length, 0, TriState.False, TriState.False, TriState.False)
                   SetProgress("Searching in " & FilePath & " (" & sPercent & ")")
                   Application.DoEvents()
-                  If Cancelled Then Exit Sub
+                  If Cancelled Then Return
                 End If
               End If
             Loop
@@ -511,7 +511,7 @@
         If Not e.bFast Then
           If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
           Application.DoEvents()
-          If Cancelled Then Exit Sub
+          If Cancelled Then Return
         End If
       End If
     Next
@@ -598,11 +598,11 @@
           If Not e.bFast Then
             If Not Cancelled Then lvResults.Columns(3).Width = lvResults.DisplayRectangle.Width - lvResults.Columns(2).Width - lvResults.Columns(1).Width - lvResults.Columns(0).Width
             Application.DoEvents()
-            If Cancelled Then Exit Sub
+            If Cancelled Then Return
           End If
         End If
       End If
-      If Cancelled Then Exit Sub
+      If Cancelled Then Return
       Dim merridian As TriState = TriState.UseDefault
       If e.cFileTimeHourM = "A"c Then
         merridian = TriState.True
@@ -714,15 +714,15 @@
   Private Sub tmrValidSearch_Tick(sender As System.Object, e As System.EventArgs) Handles tmrValidSearch.Tick
     If Not chkFileName.Checked And Not chkFileContents.Checked And Not chkFileSize.Checked And Not chkFileDate.Checked And Not (chkFileTime.Checked And (chkFileTimeHour.Checked Or chkFileTimeMinute.Checked)) Then
       If cmdFind.Enabled Then cmdFind.Enabled = False
-      Exit Sub
+      Return
     Else
       If chkFileName.Checked AndAlso String.IsNullOrEmpty(txtFileName.Text) Then
         If cmdFind.Enabled Then cmdFind.Enabled = False
-        Exit Sub
+        Return
       End If
       If chkFileContents.Checked AndAlso String.IsNullOrEmpty(txtFileContents.Text) Then
         If cmdFind.Enabled Then cmdFind.Enabled = False
-        Exit Sub
+        Return
       End If
     End If
     If Not cmdFind.Enabled Then cmdFind.Enabled = True
@@ -732,7 +732,7 @@
   Private Sub lvResults_AfterLabelEdit(sender As Object, e As System.Windows.Forms.LabelEditEventArgs) Handles lvResults.AfterLabelEdit
     If String.IsNullOrEmpty(e.Label) Then
       e.CancelEdit = True
-      Exit Sub
+      Return
     End If
     Dim item As ListViewItem = lvResults.Items(e.Item)
     Dim sPath As String = item.SubItems(3).Text & item.Text
@@ -819,7 +819,7 @@
   Private Sub lvResults_QueryContinueDrag(sender As Object, e As System.Windows.Forms.QueryContinueDragEventArgs) Handles lvResults.QueryContinueDrag
     If e.EscapePressed Then
       e.Action = DragAction.Cancel
-      Exit Sub
+      Return
     End If
     If e.KeyState And 1 Then
       e.Action = DragAction.Continue
@@ -841,7 +841,7 @@
   End Sub
 #Region "Context Menu"
   Private Sub mnuOpen_Click(sender As System.Object, e As System.EventArgs) Handles mnuOpen.Click
-    If lvResults.SelectedItems.Count = 0 Then Exit Sub
+    If lvResults.SelectedItems.Count = 0 Then Return
     For Each item As ListViewItem In lvResults.SelectedItems
       Dim sPath As String = item.SubItems(3).Text & item.Text
       If IO.File.Exists(sPath) Then
@@ -860,7 +860,7 @@
     Next
   End Sub
   Private Sub mnuOpenFolder_Click(sender As System.Object, e As System.EventArgs) Handles mnuOpenFolder.Click
-    If lvResults.SelectedItems.Count = 0 Then Exit Sub
+    If lvResults.SelectedItems.Count = 0 Then Return
     For Each item As ListViewItem In lvResults.SelectedItems
       Dim sDir As String = item.SubItems(3).Text
       Dim sPath As String = sDir & item.Text
@@ -874,7 +874,7 @@
     Next
   End Sub
   Private Sub mnuRename_Click(sender As System.Object, e As System.EventArgs) Handles mnuRename.Click
-    If lvResults.SelectedItems.Count = 0 Then Exit Sub
+    If lvResults.SelectedItems.Count = 0 Then Return
     If lvResults.SelectedItems.Count = 1 Then
       lvResults.SelectedItems(0).BeginEdit()
     Else
@@ -882,7 +882,7 @@
     End If
   End Sub
   Private Sub mnuDelete_Click(sender As System.Object, e As System.EventArgs) Handles mnuDelete.Click
-    If lvResults.SelectedItems.Count = 0 Then Exit Sub
+    If lvResults.SelectedItems.Count = 0 Then Return
     If lvResults.SelectedItems.Count = 1 Then
       Dim sPath As String = lvResults.SelectedItems(0).SubItems(3).Text & lvResults.SelectedItems(0).Text
       If MsgBox("Are you sure you want to delete """ & lvResults.SelectedItems(0).Text & """?", MsgBoxStyle.Question Or MsgBoxStyle.YesNo Or MsgBoxStyle.ApplicationModal, "FindIt") = MsgBoxResult.Yes Then
@@ -927,7 +927,7 @@
     SetProgress("Search Complete - " & lvResults.Items.Count & " Item" & IIf(lvResults.Items.Count = 1, "", "s") & " found")
   End Sub
   Private Sub mnuProperties_Click(sender As System.Object, e As System.EventArgs) Handles mnuProperties.Click
-    If lvResults.SelectedItems.Count = 0 Then Exit Sub
+    If lvResults.SelectedItems.Count = 0 Then Return
     If lvResults.SelectedItems.Count = 1 Then
       Dim sPath As String = lvResults.SelectedItems(0).SubItems(3).Text & lvResults.SelectedItems(0).Text
       DisplayProperties(sPath)
