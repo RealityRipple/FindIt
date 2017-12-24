@@ -26,10 +26,15 @@
       cmbDrive.Drive = My.Computer.FileSystem.SpecialDirectories.ProgramFiles.Substring(0, 1).ToUpper & ":"
       lstDir.Path = cmbDrive.Drive.Substring(0, 1).ToUpper & ":\"
     End Try
-    If My.Computer.Registry.ClassesRoot.OpenSubKey("Folder\shell\FindIt\command") Is Nothing OrElse String.IsNullOrEmpty(My.Computer.Registry.ClassesRoot.OpenSubKey("Folder\shell\FindIt\command").GetValue("", Nothing)) Then
-      My.Computer.Registry.ClassesRoot.CreateSubKey("Folder\shell\FindIt\command")
-      My.Computer.Registry.ClassesRoot.OpenSubKey("Folder\shell\FindIt\command", True).SetValue("", """" & Application.ExecutablePath & """ %1")
+    If My.Computer.Registry.ClassesRoot.OpenSubKey("Directory\shell\FindIt\command") Is Nothing OrElse String.IsNullOrEmpty(My.Computer.Registry.ClassesRoot.OpenSubKey("Directory\shell\FindIt\command").GetValue("", Nothing)) Then
+      My.Computer.Registry.ClassesRoot.CreateSubKey("Directory\shell\FindIt\command")
+      My.Computer.Registry.ClassesRoot.OpenSubKey("Directory\shell\FindIt\command", True).SetValue("", """" & Application.ExecutablePath & """ %1")
     End If
+    If My.Computer.Registry.ClassesRoot.OpenSubKey("Drive\shell\FindIt\command") Is Nothing OrElse String.IsNullOrEmpty(My.Computer.Registry.ClassesRoot.OpenSubKey("Drive\shell\FindIt\command").GetValue("", Nothing)) Then
+      My.Computer.Registry.ClassesRoot.CreateSubKey("Drive\shell\FindIt\command")
+      My.Computer.Registry.ClassesRoot.OpenSubKey("Drive\shell\FindIt\command", True).SetValue("", """" & Application.ExecutablePath & """ %1")
+    End If
+    If My.Computer.Registry.ClassesRoot.OpenSubKey("Folder\shell\FindIt") IsNot Nothing Then My.Computer.Registry.ClassesRoot.DeleteSubKeyTree("Folder\shell\FindIt")
     pnlFileName.Height = 40
     pnlFileContents.Height = 20
     pnlFileDate.Height = 20
