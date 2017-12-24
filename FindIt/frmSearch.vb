@@ -204,7 +204,7 @@
                                       IIf(chkFileDate.Checked, dtFileDate.Value.Date, New Date(1970, 1, 1)),
                                       IIf(chkFileSize.Checked,
                                         IIf(cmbSizeCompare.SelectedIndex = 0, FindEventArgs.SizeComparisons.Greater,
-                                            IIf(cmbSizeCompare.SelectedIndex = 1, FindEventArgs.SizeComparisons.Equal, FindEventArgs.SizeComparisons.Less)
+                                          IIf(cmbSizeCompare.SelectedIndex = 1, FindEventArgs.SizeComparisons.Equal, FindEventArgs.SizeComparisons.Less)
                                         ), FindEventArgs.SizeComparisons.None),
                                       IIf(chkFileSize.Checked, txtFileSizeValue.Value, 0),
                                       IIf(cmbFileSizeScale.SelectedIndex = 0, FindEventArgs.SizeScales.Byte,
@@ -326,15 +326,15 @@
       sFileList = {}
     End Try
     For Each FilePath In sFileList
-      Dim bAdd As Boolean = False
+      Dim bAdd As Boolean = True
       If (Not String.IsNullOrEmpty(e.sFileName)) Then
         If e.bFileNameCS Then
-          If IO.Path.GetFileName(FilePath).Contains(e.sFileName) Then bAdd = True
+          If Not IO.Path.GetFileName(FilePath).Contains(e.sFileName) Then bAdd = False
         Else
-          If IO.Path.GetFileName(FilePath).ToLower.Contains(e.sFileName.ToLower) Then bAdd = True
+          If Not IO.Path.GetFileName(FilePath).ToLower.Contains(e.sFileName.ToLower) Then bAdd = False
         End If
       End If
-      If Not bAdd AndAlso Not String.IsNullOrEmpty(e.sFileContents) Then
+      If bAdd AndAlso Not String.IsNullOrEmpty(e.sFileContents) Then
         If e.bFast Then
           SetProgVal("Searching in " & FilePath)
         Else
@@ -344,6 +344,7 @@
           Using ioRead As New IO.BinaryReader(ioFile, System.Text.Encoding.GetEncoding("latin1"))
             Dim sPercent As String = "0%"
             Dim ContentIndex As Integer = -1
+            Dim success As Boolean = False
             Do While ioRead.BaseStream.Position < ioRead.BaseStream.Length
               ContentIndex = FindValue(ioRead, e.sFileContents(0), e.bFileContentsCS, ContentIndex + 1)
               If ContentIndex = -1 Then Exit Do
@@ -356,12 +357,12 @@
               If Cancelled Then Exit Sub
               If e.bFileContentsCS Then
                 If e.sFileContents = sTemp Then
-                  bAdd = True
+                  success = True
                   Exit Do
                 End If
               Else
                 If e.sFileContents.ToLower = sTemp.ToLower Then
-                  bAdd = True
+                  success = True
                   Exit Do
                 End If
               End If
@@ -374,10 +375,11 @@
                 End If
               End If
             Loop
+            If Not success Then bAdd = False
           End Using
         End Using
       End If
-      If Not bAdd AndAlso (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
+      If bAdd AndAlso (e.iFileSizeVal > 0 And Not e.bFileSizeCompare = FindEventArgs.SizeComparisons.None) Then
         Dim mySize As Int64 = New IO.FileInfo(FilePath).Length
         Dim FindSize As Int64 = e.iFileSizeVal
         Dim iScale As Int64 = 1
@@ -391,19 +393,19 @@
         End Select
         FindSize *= iScale
         If e.bFileSizeCompare = FindEventArgs.SizeComparisons.Less Then
-          If mySize < FindSize Then bAdd = True
+          If mySize > FindSize Then bAdd = False
         ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Greater Then
-          If mySize > FindSize Then bAdd = True
+          If mySize < FindSize Then bAdd = False
         ElseIf e.bFileSizeCompare = FindEventArgs.SizeComparisons.Equal Then
-          If Math.Abs(mySize - FindSize) < iScale Then bAdd = True
+          If Math.Abs(mySize - FindSize) > iScale Then bAdd = False
         End If
       End If
-      If Not bAdd AndAlso (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
+      If bAdd AndAlso (Not e.dFileDateVal.Year = 1970 And Not e.bFileDateCompare = FindEventArgs.DateComparisons.None) Then
         Dim myDate As Date = New IO.FileInfo(FilePath).LastWriteTime
         If e.bFileDateCompare = FindEventArgs.DateComparisons.Earlier Then
-          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = True
+          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = False
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
-          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = True
+          If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) > 0 Then bAdd = False
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
           If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) < 7 Then bAdd = True
         End If
@@ -463,7 +465,7 @@
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Later Then
           If DateDiff(DateInterval.Minute, myDate, e.dFileDateVal) < 0 Then bAdd = True
         ElseIf e.bFileDateCompare = FindEventArgs.DateComparisons.Near Then
-          If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) < 7 Then bAdd = True
+          If Math.Abs(DateDiff(DateInterval.Day, myDate, e.dFileDateVal)) > 7 Then bAdd = False
         End If
       End If
       If bAdd Then
@@ -938,5 +940,4 @@
     End Property
   End Class
 #End Region
-
 End Class
