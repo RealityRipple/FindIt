@@ -724,6 +724,12 @@
         If cmdFind.Enabled Then cmdFind.Enabled = False
         Return
       End If
+      If chkFileTime.Checked Then
+        If Not chkFileTimeHour.Checked And Not chkFileTimeMinute.Checked Then
+          If cmdFind.Enabled Then cmdFind.Enabled = False
+          Return
+        End If
+      End If
     End If
     If Not cmdFind.Enabled Then cmdFind.Enabled = True
   End Sub
@@ -960,10 +966,16 @@
       txtFileSizeValue.Enabled = bEnabled
       cmbFileSizeScale.Enabled = bEnabled
       chkFileDate.Enabled = bEnabled
+      chkFileTime.Enabled = bEnabled
       optBefore.Enabled = bEnabled
       optAround.Enabled = bEnabled
       optAfter.Enabled = bEnabled
       dtFileDate.Enabled = bEnabled
+      chkFileTimeHour.Enabled = bEnabled
+      chkFileTimeMinute.Enabled = bEnabled
+      txtFileTimeHour.Enabled = bEnabled
+      cmbFileTimeHourMerridian.Enabled = bEnabled
+      cmbFileTimeMinute.Enabled = bEnabled
       cmbDrive.Enabled = bEnabled
       lstDir.Enabled = bEnabled
       chkFast.Enabled = bEnabled
